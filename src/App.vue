@@ -27,22 +27,25 @@
     <b-modal v-model="modalShow" :title="modalTitle" centered>
       <b-form>
         <b-form-group label="名前" label-for="name">
-          <b-form-input type="text" v-model="form.contact.name" required placeholder="名前を入力" ></b-form-input>
+          <b-form-input type="text" v-model="form.contact.name" :state="!$v.form.contact.name.$invalid" aria-describedby="nameFeedback"></b-form-input>
+          <b-form-invalid-feedback id="nameFeedback">名前は 2-10 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
         <b-form-group label="住所" label-for="address">
-          <b-form-input type="text" v-model="form.contact.address" required placeholder="住所を入力" ></b-form-input>
+          <b-form-input type="text" v-model="form.contact.address" :state="!$v.form.contact.address.$invalid" aria-describedby="addressFeedback"></b-form-input>
+          <b-form-invalid-feedback id="addressFeedback">住所は 10-20 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
         <b-form-group label="電話番号" label-for="tel">
-          <b-form-input type="text" v-model="form.contact.tel" required placeholder="電話番号を入力" ></b-form-input>
-        </b-form-group>        
+          <b-form-input type="text" v-model="form.contact.tel" :state="!$v.form.contact.tel.$invalid" aria-describedby="telFeedback" ></b-form-input>
+          <b-form-invalid-feedback id="telFeedback">電話番号は 10-13 文字で入力してください</b-form-invalid-feedback>
+        </b-form-group>
       </b-form>
 
       <div slot="modal-footer" class="w-100">
         <div class="float-right">
           <b-btn size="sm" variant="default" @click="modalShow = false">
             キャンセル
-          </b-btn>        
-          <b-btn size="sm" class="ml-1" :variant="modalButtonClass" @click="saveContact">
+          </b-btn>
+          <b-btn size="sm" class="ml-1" :variant="modalButtonClass" @click="saveContact" :disabled="$v.form.$invalid">
             {{modalButtonText}}
           </b-btn>
         </div>
@@ -53,9 +56,14 @@
 
 <script>
 import Vue from 'vue'
+import { validationMixin } from "vuelidate"
+import { required, minLength, maxLength } from "vuelidate/lib/validators"
 
 export default {
   name: "App",
+  mixins: [
+    validationMixin
+  ],
   data () {
     return {
       modalShow: false,
@@ -64,13 +72,38 @@ export default {
       modalButtonClass: 'primary',
       form: {
         contact: {
+          id: null,
+          name: null,
+          address: null,
+          tel: null
         }
       },
       contancts: [
         { id: 1, name: '山田太郎', address: '東京都渋谷区', tel: '08011112222' },
-        { id: 2, name: '田中太郎', address: '東京都文京区', tel: '08033334444' },        
+        { id: 2, name: '田中太郎', address: '東京都文京区', tel: '08033334444' },
         { id: 3, name: '山下太郎', address: '横浜市西区', tel: '09055556666' },
       ]
+    }
+  },
+  validations: {
+    form: {
+      contact: {
+        name: {
+          required,
+          minLength: minLength(2),
+          maxLength: maxLength(10)
+        },
+        address: {
+          required,
+          minLength: minLength(10),
+          maxLength: maxLength(20)
+        },
+        tel: {
+          required,
+          minLength: minLength(10),
+          maxLength: maxLength(13)
+        },
+      },
     }
   },
   methods: {
