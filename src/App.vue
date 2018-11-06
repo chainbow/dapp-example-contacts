@@ -264,14 +264,14 @@ export default {
       }
     },
     saveContact() {
-      if (this.form.contact.id) {
-        const index = this.contacts.findIndex(item => item.id === this.form.contact.id);
-        const contact = this.contacts[index];
-        Object.assign(contact, this.form.contact);
+      this.inProgress = true
+      this.pendingTx = null
 
-        try {
-          this.inProgress = true
-          this.pendingTx = null
+      try {
+        if (this.form.contact.id) {
+          const index = this.contacts.findIndex(item => item.id === this.form.contact.id);
+          const contact = this.contacts[index];
+          Object.assign(contact, this.form.contact);
 
           this.contractInstance.methods.updateContact(
             contact.id, contact.name, contact.address, contact.tel
@@ -283,25 +283,41 @@ export default {
             this.pendingTx = null;
             this.inProgress = false;
 
-            this.notifity = '連絡先を更新しました'
-            this.dismissCountDown = this.dismissSecs;
-
             await this.getContacts();
 
             this.modalShow = false;
+            this.notifity = '連絡先を更新しました'
+            this.dismissCountDown = this.dismissSecs;
           }).on('error', async (err) => {
             console.error(err)
             this.inProgress = false
           })
-        } catch (e) {
-          console.error(e)
-          this.inProgress = false
+        } else {
+          const contact = Object.assign({}, this.form.contact);
+
+          this.contractInstance.methods.addContact(
+            contact.name, contact.address, contact.tel
+          ).send({
+            from: this.currentAccount
+          }).on('transactionHash', (hash) => {
+            this.pendingTx = hash
+          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = null;
+            this.inProgress = false;
+
+            await this.getContacts();
+
+            this.modalShow = false;
+            this.notifity = '連絡先を新規作成しました'
+            this.dismissCountDown = this.dismissSecs;
+          }).on('error', async (err) => {
+            console.error(err)
+            this.inProgress = false
+          })
         }
-      } else {
-        const contact = Object.assign({}, this.form.contact);
-
-        this.contacts.push(contact);
-
+      } catch (e) {
+        console.error(e)
+        this.inProgress = false
       }
     },
   },
