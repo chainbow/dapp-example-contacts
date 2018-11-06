@@ -235,7 +235,7 @@ export default {
           address: item.contactAddress,
           tel: item.tel
         }
-      })
+      }).filter(item => item.id !== '0')
     },
     countDownChanged (dismissCountDown) {
       this.dismissCountDown = dismissCountDown
@@ -260,7 +260,33 @@ export default {
     },
     deleteContact(contact) {
       if (confirm('連絡先を削除します。よろしいですか？')) {
-        this.contacts = this.contacts.filter(item => item.id !== contact.id);
+        this.inProgress = true
+        this.pendingTx = null
+
+        try {
+          this.contractInstance.methods.deleteContact(
+            contact.id
+          ).send({
+            from: this.currentAccount
+          }).on('transactionHash', (hash) => {
+            this.pendingTx = hash
+          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = null;
+            this.inProgress = false;
+
+            await this.getContacts();
+
+            this.modalShow = false;
+            this.notifity = '連絡先を削除しました'
+            this.dismissCountDown = this.dismissSecs;
+          }).on('error', async (err) => {
+            console.error(err)
+            this.inProgress = false
+          })
+        } catch (e) {
+          console.error(e)
+          this.inProgress = false
+        }
       }
     },
     saveContact() {
