@@ -1,16 +1,16 @@
 <template>
   <div class='container mt-4' id="app">
-    <b-alert variant="warning" :show='!this.web3'>
+    <b-alert variant="warning" :show='!this.loading && !this.web3'>
       DApp ブラウザからアクセスしてください
     </b-alert>
-    <b-alert variant="warning" :show='!this.currentAccount'>
+    <b-alert variant="warning" :show='!this.loading && !this.currentAccount'>
       Metamask の場合は、アンロックしてください
     </b-alert>
     <div class="w100 justify-content-between">
       <h2>
         連絡帳
         <span class='float-right'>
-          <b-btn @click="showNewContact" variant='primary' size='sm'>連絡先追加</b-btn>
+          <b-btn @click="showNewContact" variant='primary' size='sm' :disabled="loading">連絡先追加</b-btn>
         </span>
       </h2>
     </div>
@@ -30,8 +30,11 @@
         </div>
       </b-list-group-item>
     </b-list-group>
-    <b-alert variant="warning" :show='this.contacts.length === 0'>
+    <b-alert variant="warning" :show='!this.loading && this.contacts.length === 0'>
       まだデータはありません
+    </b-alert>
+    <b-alert variant="info" :show='this.loading'>
+      データ取得中
     </b-alert>
     <b-modal v-model="modalShow" :title="modalTitle" centered>
       <b-form>
@@ -94,6 +97,7 @@ export default {
   ],
   data() {
     return {
+      loading: false,
       web3: null,
       provider: null,
       currentAccount: null,
@@ -120,8 +124,13 @@ export default {
       },
     },
   },
-  created() {
-    this.initWeb3()
+  async created() {
+    this.loading = true;
+
+    await this.initWeb3()
+    await this.getContacts()
+
+    this.loading = false;
   },
   computed: {
     isExists() {
@@ -139,35 +148,35 @@ export default {
   },
   methods: {
     async initWeb3() {
-      const globalContext = (typeof window === 'object') ? window : global
+      const globalContext = (typeof window === 'object') ? window : global;
 
       if (globalContext.web3 === undefined) {
-        throw Error('this application needs to run in a DApp browser')
+        throw Error('this application needs to run in a DApp browser');
       } else {
-        this.provider = globalContext.web3.currentProvider
-        this.web3 = new Web3(this.provider)
-        this.currentAccount = (await this.web3.eth.getAccounts())[0]
+        this.provider = globalContext.web3.currentProvider;
+        this.web3 = new Web3(this.provider);
+        this.currentAccount = (await this.web3.eth.getAccounts())[0];
 
         setInterval(async () => {
-          const newAccount = (await this.web3.eth.getAccounts())[0]
+          const newAccount = (await this.web3.eth.getAccounts())[0];
           if (newAccount !== this.currentAccount) {
-            this.currentAccount = newAccount
+            this.currentAccount = newAccount;
           }
         }, 100);
 
-        this.network = await this.initNetwork()
-        this.contractInstance = new this.web3.eth.Contract(ContractAbi, CONTRACT_ADDRESS)
+        this.network = await this.initNetwork();
+        this.contractInstance = new this.web3.eth.Contract(ContractAbi, CONTRACT_ADDRESS);
       }
     },
     async initNetwork() {
-      const chainId = await this.web3.eth.net.getId()
-      let data = { chainId }
+      const chainId = await this.web3.eth.net.getId();
+      let data = { chainId };
 
       switch (chainId) {
         case 1:
-          data.chain = 'mainnet'
-          data.etherscan = 'https://etherscan.io'
-          data.infuraWssUrl = 'wss://mainnet.infura.io/ws'
+          data.chain = 'mainnet';
+          data.etherscan = 'https://etherscan.io';
+          data.infuraWssUrl = 'wss://mainnet.infura.io/ws';
           break
         case 2:
           data.chain = 'Morden'
@@ -195,6 +204,18 @@ export default {
       }
 
       return data
+    },
+    async getContacts() {
+      const contacts = await this.contractInstance.methods.getContactList().call()
+
+      this.contacts = contacts.map(item => {
+        return {
+          id: item.id,
+          name: item.name,
+          address: item.contactAddress,
+          tel: item.tel
+        }
+      })
     },
     showNewContact() {
       this.form.contact = {
