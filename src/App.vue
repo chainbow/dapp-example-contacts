@@ -82,9 +82,6 @@ export default {
   data() {
     return {
       modalShow: false,
-      modalTitle: '',
-      modalButtonText: '追加する',
-      modalButtonClass: 'primary',
       form: {
         contact: {
           id: null,
@@ -109,12 +106,22 @@ export default {
       },
     },
   },
+  computed: {
+    isExists() {
+      return this.form.contact && this.form.contact.id;
+    },
+    modalTitle() {
+      return this.isExists ? '連絡先編集' : '連絡先新規作成';
+    },
+    modalButtonClass() {
+      return this.isExists ? 'success' : 'primary';
+    },
+    modalButtonText() {
+      return this.isExists ? '更新する' : '登録する';
+    },
+  },
   methods: {
     showNewContact() {
-      this.modalTitle = '連絡先追加';
-      this.modalButtonText = '追加する';
-      this.modalButtonClass = 'primary';
-
       this.form.contact = {
         id: null,
         name: null,
@@ -125,9 +132,6 @@ export default {
       this.modalShow = true;
     },
     editContact(contact) {
-      this.modalTitle = '連絡先編集';
-      this.modalButtonText = '更新する';
-      this.modalButtonClass = 'success';
       Object.assign(this.form.contact, contact);
 
       this.modalShow = true;
@@ -145,8 +149,7 @@ export default {
 
         Vue.set(this.contancts, index, contact);
       } else {
-        const contact = {};
-        Object.assign(contact, this.form.contact);
+        const contact = Object.assign({}, this.form.contact);
 
         this.contancts.push(contact);
       }
