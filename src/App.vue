@@ -10,7 +10,7 @@
     </div>
 
     <b-list-group>
-      <b-list-group-item v-for="contact in contancts" :key='contact.id' href="#" class="flex-column align-items-start">
+      <b-list-group-item v-for="contact in contacts" :key='contact.id' href="#" class="flex-column align-items-start">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{contact.name}}</h5>
           <div class="float-right">
@@ -27,15 +27,30 @@
     <b-modal v-model="modalShow" :title="modalTitle" centered>
       <b-form>
         <b-form-group label="名前" label-for="name">
-          <b-form-input type="text" v-model="form.contact.name" :state="!$v.form.contact.name.$invalid" aria-describedby="nameFeedback"></b-form-input>
+          <b-form-input
+            type="text"
+            v-model="form.contact.name"
+            :state="!$v.form.contact.name.$invalid"
+            aria-describedby="nameFeedback"
+          />
           <b-form-invalid-feedback id="nameFeedback">名前は 2-10 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
         <b-form-group label="住所" label-for="address">
-          <b-form-input type="text" v-model="form.contact.address" :state="!$v.form.contact.address.$invalid" aria-describedby="addressFeedback"></b-form-input>
+          <b-form-input
+            type="text"
+            v-model="form.contact.address"
+            :state="!$v.form.contact.address.$invalid"
+            aria-describedby="addressFeedback"
+          />
           <b-form-invalid-feedback id="addressFeedback">住所は 10-20 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
         <b-form-group label="電話番号" label-for="tel">
-          <b-form-input type="text" v-model="form.contact.tel" :state="!$v.form.contact.tel.$invalid" aria-describedby="telFeedback" ></b-form-input>
+          <b-form-input
+            type="text"
+            v-model="form.contact.tel"
+            :state="!$v.form.contact.tel.$invalid"
+            aria-describedby="telFeedback"
+          />
           <b-form-invalid-feedback id="telFeedback">電話番号は 10-13 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
       </b-form>
@@ -55,19 +70,19 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import { validationMixin } from "vuelidate"
-import { required, minLength, maxLength } from "vuelidate/lib/validators"
+import Vue from 'vue';
+import { validationMixin } from 'vuelidate';
+import { required, minLength, maxLength } from 'vuelidate/lib/validators';
 
 export default {
-  name: "App",
+  name: 'App',
   mixins: [
-    validationMixin
+    validationMixin,
   ],
-  data () {
+  data() {
     return {
       modalShow: false,
-      modalTitle: "",
+      modalTitle: '',
       modalButtonText: '追加する',
       modalButtonClass: 'primary',
       form: {
@@ -75,81 +90,69 @@ export default {
           id: null,
           name: null,
           address: null,
-          tel: null
-        }
+          tel: null,
+        },
       },
-      contancts: [
+      contacts: [
         { id: 1, name: '山田太郎', address: '東京都渋谷区', tel: '08011112222' },
         { id: 2, name: '田中太郎', address: '東京都文京区', tel: '08033334444' },
         { id: 3, name: '山下太郎', address: '横浜市西区', tel: '09055556666' },
-      ]
-    }
+      ],
+    };
   },
   validations: {
     form: {
       contact: {
-        name: {
-          required,
-          minLength: minLength(2),
-          maxLength: maxLength(10)
-        },
-        address: {
-          required,
-          minLength: minLength(10),
-          maxLength: maxLength(20)
-        },
-        tel: {
-          required,
-          minLength: minLength(10),
-          maxLength: maxLength(13)
-        },
+        name: { required, minLength: minLength(2), maxLength: maxLength(10) },
+        address: { required, minLength: minLength(10), maxLength: maxLength(20) },
+        tel: { required, minLength: minLength(10), maxLength: maxLength(13) },
       },
-    }
+    },
   },
   methods: {
-    showNewContact: function() {
-      this.modalTitle = "連絡先追加"
-      this.modalButtonText = '追加する'
-      this.modalButtonClass = 'primary'
+    showNewContact() {
+      this.modalTitle = '連絡先追加';
+      this.modalButtonText = '追加する';
+      this.modalButtonClass = 'primary';
 
       this.form.contact = {
         id: null,
         name: null,
         address: null,
-        tel: null
-      }
+        tel: null,
+      };
 
-      this.modalShow = true
+      this.modalShow = true;
     },
-    editContact: function(contact) {
-      this.modalTitle = "連絡先編集"
-      this.modalButtonText = '更新する'
-      this.modalButtonClass = 'success'
+    editContact(contact) {
+      this.modalTitle = '連絡先編集';
+      this.modalButtonText = '更新する';
+      this.modalButtonClass = 'success';
       Object.assign(this.form.contact, contact);
 
-      this.modalShow = true
+      this.modalShow = true;
     },
-    deleteContact: function(contact) {
+    deleteContact(contact) {
       if (confirm('連絡先を削除します。よろしいですか？')) {
-        this.contancts = this.contancts.filter( item => item.id !== contact.id)
+        this.contancts = this.contancts.filter(item => item.id !== contact.id);
       }
     },
-    saveContact: function() {
+    saveContact() {
       if (this.form.contact.id) {
-        const index = this.contancts.findIndex(item => item.id === this.form.contact.id)
-        const contact = this.contancts[index]
+        const index = this.contancts.findIndex(item => item.id === this.form.contact.id);
+        const contact = this.contancts[index];
         Object.assign(contact, this.form.contact);
 
-        Vue.set(this.contancts, index, contact)
+        Vue.set(this.contancts, index, contact);
       } else {
-        const contact = {}
+        const contact = {};
         Object.assign(contact, this.form.contact);
 
-        this.contancts.push(contact)
+        this.contancts.push(contact);
       }
 
-      this.modalShow = false
-    }
+      this.modalShow = false;
+    },
   },
 };
 </script>
