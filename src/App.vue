@@ -223,7 +223,9 @@ export default {
       return data
     },
     async getContacts() {
-      const contacts = await this.contractInstance.methods.getContactList().call()
+      this.contacts = [];
+
+      const contacts = await this.contractInstance.methods.getContactList().call();
 
       this.contacts = contacts.map(item => {
         return {
@@ -232,7 +234,7 @@ export default {
           address: item.contactAddress,
           tel: item.tel
         }
-      }).filter(item => item.id !== '0')
+      }).filter(item => item.id !== '0');
     },
     countDownChanged (dismissCountDown) {
       this.dismissCountDown = dismissCountDown
