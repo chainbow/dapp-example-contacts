@@ -1,5 +1,11 @@
 <template>
   <div class='container mt-4' id="app">
+    <b-alert variant="warning" :show='!this.web3'>
+      DApp ブラウザからアクセスしてください
+    </b-alert>
+    <b-alert variant="warning" :show='!this.currentAccount'>
+      Metamask の場合は、アンロックしてください
+    </b-alert>
     <div class="w100 justify-content-between">
       <h2>
         連絡帳
@@ -24,6 +30,9 @@
         </div>
       </b-list-group-item>
     </b-list-group>
+    <b-alert variant="warning" :show='this.contacts.length === 0'>
+      まだデータはありません
+    </b-alert>
     <b-modal v-model="modalShow" :title="modalTitle" centered>
       <b-form>
         <b-form-group label="名前" label-for="name">
@@ -74,6 +83,7 @@ import Vue from 'vue';
 import { validationMixin } from 'vuelidate';
 import { required, minLength, maxLength } from 'vuelidate/lib/validators';
 import Web3 from 'web3';
+import ContractAbi from '../contracts/abi.json'
 
 const CONTRACT_ADDRESS = '0xbcb88d7bca5e3498748182735dcba73459e702e6'
 
@@ -88,6 +98,7 @@ export default {
       provider: null,
       currentAccount: null,
       network: null,
+      contractInstance: null,
       modalShow: false,
       form: {
         contact: {
@@ -97,11 +108,7 @@ export default {
           tel: null,
         },
       },
-      contacts: [
-        { id: 1, name: '山田太郎', address: '東京都渋谷区', tel: '08011112222' },
-        { id: 2, name: '田中太郎', address: '東京都文京区', tel: '08033334444' },
-        { id: 3, name: '山下太郎', address: '横浜市西区', tel: '09055556666' },
-      ],
+      contacts: [],
     };
   },
   validations: {
@@ -149,6 +156,7 @@ export default {
         }, 100);
 
         this.network = await this.initNetwork()
+        this.contractInstance = new this.web3.eth.Contract(ContractAbi, CONTRACT_ADDRESS)
       }
     },
     async initNetwork() {
