@@ -29,7 +29,7 @@
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{contact.name}}</h5>
           <div class="float-right">
-            <b-btn @click="editContact(contact)" variant='outline-success' size='sm'>編集</b-btn>
+            <b-btn @click="editContact(contact)" variant='outline-success' size='sm' :disabled="!currentAccount">編集</b-btn>
           </div>
         </div>
         <div>
