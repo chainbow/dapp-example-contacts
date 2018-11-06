@@ -10,7 +10,7 @@
       <h2>
         連絡帳
         <span class='float-right'>
-          <b-btn @click="showNewContact" variant='primary' size='sm' :disabled="loading">連絡先追加</b-btn>
+          <b-btn @click="showNewContact" variant='outline-primary' size='sm' :disabled="loading">連絡先追加</b-btn>
         </span>
       </h2>
     </div>
@@ -30,7 +30,6 @@
           <h5 class="mb-1">{{contact.name}}</h5>
           <div class="float-right">
             <b-btn @click="editContact(contact)" variant='outline-success' size='sm'>編集</b-btn>
-            <b-btn @click="deleteContact(contact)" variant='outline-danger' size='sm' class='ml-2'>削除</b-btn>
           </div>
         </div>
         <div>
@@ -84,10 +83,8 @@
 
       <div slot="modal-footer" class="w-100">
         <div class="float-right">
-          <b-btn size="sm" variant="default" :disabled="inProgress" @click="modalShow = false">
-            キャンセル
-          </b-btn>
-          <b-btn size="sm" class="ml-1" :variant="modalButtonClass" @click="saveContact" :disabled="inProgress || $v.form.$invalid">
+          <b-btn @click="deleteContact(form.contact)" v-if='isExists' size='sm' variant='danger' :disabled="inProgress" >削除する</b-btn>
+          <b-btn @click='saveContact' size="sm" class="ml-1" :variant="modalButtonClass" :disabled="inProgress || $v.form.$invalid">
             {{modalButtonText}}
           </b-btn>
         </div>
