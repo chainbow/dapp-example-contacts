@@ -1,16 +1,16 @@
 <template>
   <div class='container mt-4' id="app">
     <b-alert variant="warning" :show='!this.loading && !this.web3'>
-      DApp ブラウザからアクセスしてください
+      Metamask をインストールするか、DApp ブラウザからアクセスしてください
     </b-alert>
-    <b-alert variant="warning" :show='!this.loading && !this.currentAccount'>
+    <b-alert variant="warning" :show='!this.loading && this.web3 && !this.currentAccount'>
       Metamask の場合は、アンロックしてください
     </b-alert>
     <div class="w100 justify-content-between">
       <h2>
         連絡帳
         <span class='float-right'>
-          <b-btn @click="showNewContact" variant='outline-primary' size='sm' :disabled="loading">連絡先追加</b-btn>
+          <b-btn @click="showNewContact" variant='outline-primary' size='sm' :disabled="!this.currentAccount || loading">連絡先追加</b-btn>
         </span>
       </h2>
     </div>
@@ -145,7 +145,9 @@ export default {
     this.loading = true;
 
     await this.initWeb3()
-    await this.getContacts()
+    if (this.contractInstance) {
+      await this.getContacts()
+    }
 
     this.loading = false;
   },
@@ -167,9 +169,7 @@ export default {
     async initWeb3() {
       const globalContext = (typeof window === 'object') ? window : global;
 
-      if (globalContext.web3 === undefined) {
-        throw Error('this application needs to run in a DApp browser');
-      } else {
+      if (globalContext.web3 !== undefined) {
         this.provider = globalContext.web3.currentProvider;
         this.web3 = new Web3(this.provider);
         this.currentAccount = (await this.web3.eth.getAccounts())[0];
