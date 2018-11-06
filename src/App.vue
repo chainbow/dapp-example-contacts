@@ -73,6 +73,9 @@
 import Vue from 'vue';
 import { validationMixin } from 'vuelidate';
 import { required, minLength, maxLength } from 'vuelidate/lib/validators';
+import Web3 from 'web3';
+
+const CONTRACT_ADDRESS = '0xbcb88d7bca5e3498748182735dcba73459e702e6'
 
 export default {
   name: 'App',
@@ -81,6 +84,10 @@ export default {
   ],
   data() {
     return {
+      web3: null,
+      provider: null,
+      currentAccount: null,
+      network: null,
       modalShow: false,
       form: {
         contact: {
@@ -106,6 +113,9 @@ export default {
       },
     },
   },
+  created() {
+    this.initWeb3()
+  },
   computed: {
     isExists() {
       return this.form.contact && this.form.contact.id;
@@ -121,6 +131,63 @@ export default {
     },
   },
   methods: {
+    async initWeb3() {
+      const globalContext = (typeof window === 'object') ? window : global
+
+      if (globalContext.web3 === undefined) {
+        throw Error('this application needs to run in a DApp browser')
+      } else {
+        this.provider = globalContext.web3.currentProvider
+        this.web3 = new Web3(this.provider)
+        this.currentAccount = (await this.web3.eth.getAccounts())[0]
+
+        setInterval(async () => {
+          const newAccount = (await this.web3.eth.getAccounts())[0]
+          if (newAccount !== this.currentAccount) {
+            this.currentAccount = newAccount
+          }
+        }, 100);
+
+        this.network = await this.initNetwork()
+      }
+    },
+    async initNetwork() {
+      const chainId = await this.web3.eth.net.getId()
+      let data = { chainId }
+
+      switch (chainId) {
+        case 1:
+          data.chain = 'mainnet'
+          data.etherscan = 'https://etherscan.io'
+          data.infuraWssUrl = 'wss://mainnet.infura.io/ws'
+          break
+        case 2:
+          data.chain = 'Morden'
+          break
+        case 3:
+          data.chain = 'ropsten'
+          data.etherscan = 'https://ropsten.etherscan.io/'
+          data.infuraWssUrl = 'wss://ropsten.infura.io/ws'
+          break
+        case 4:
+          data.chain = 'Rinkeby'
+          data.etherscan = 'https://rinkeby.etherscan.io/'
+          data.infuraWssUrl = 'wss://rinkeby.infura.io/ws'
+          break
+        case 42:
+          data.chain = 'kovan'
+          data.etherscan = 'https://kovan.etherscan.io'
+          data.infuraWssUrl = 'wss://kovan.infura.io/ws'
+          break
+        case 5777:
+          data.chain = 'ganache'
+          break
+        default:
+          data.chain = 'privatenet'
+      }
+
+      return data
+    },
     showNewContact() {
       this.form.contact = {
         id: null,
