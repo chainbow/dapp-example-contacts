@@ -14,6 +14,15 @@
         </span>
       </h2>
     </div>
+    <b-alert
+      variant="success"
+      :show='dismissCountDown'
+      dismissible
+      @dismissed="dismissCountDown=0"
+      @dismiss-count-down="countDownChanged"
+    >
+      {{this.notifity}}
+    </b-alert>
 
     <b-list-group>
       <b-list-group-item v-for="contact in contacts" :key='contact.id' href="#" class="flex-column align-items-start">
@@ -44,6 +53,7 @@
             v-model="form.contact.name"
             :state="!$v.form.contact.name.$invalid"
             aria-describedby="nameFeedback"
+            :disabled='this.inProgress'
           />
           <b-form-invalid-feedback id="nameFeedback">名前は 2-10 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
@@ -53,6 +63,7 @@
             v-model="form.contact.address"
             :state="!$v.form.contact.address.$invalid"
             aria-describedby="addressFeedback"
+            :disabled='this.inProgress'
           />
           <b-form-invalid-feedback id="addressFeedback">住所は 10-20 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
@@ -62,17 +73,21 @@
             v-model="form.contact.tel"
             :state="!$v.form.contact.tel.$invalid"
             aria-describedby="telFeedback"
+            :disabled='this.inProgress'
           />
           <b-form-invalid-feedback id="telFeedback">電話番号は 10-13 文字で入力してください</b-form-invalid-feedback>
         </b-form-group>
       </b-form>
+      <div class="w100 text-center" v-if='this.pendingTx'>
+        <a class='btn btn-outline-info' :href="this.network.etherscan + '/tx/' + this.pendingTx" target="_blank">etherscan で確認する</a>
+      </div>
 
       <div slot="modal-footer" class="w-100">
         <div class="float-right">
-          <b-btn size="sm" variant="default" @click="modalShow = false">
+          <b-btn size="sm" variant="default" :disabled="inProgress" @click="modalShow = false">
             キャンセル
           </b-btn>
-          <b-btn size="sm" class="ml-1" :variant="modalButtonClass" @click="saveContact" :disabled="$v.form.$invalid">
+          <b-btn size="sm" class="ml-1" :variant="modalButtonClass" @click="saveContact" :disabled="inProgress || $v.form.$invalid">
             {{modalButtonText}}
           </b-btn>
         </div>
@@ -103,6 +118,11 @@ export default {
       currentAccount: null,
       network: null,
       contractInstance: null,
+      inProgress: false,
+      pendingTx: null,
+      notifity: null,
+      dismissSecs: 5,
+      dismissCountDown: 0,
       modalShow: false,
       form: {
         contact: {
@@ -217,6 +237,12 @@ export default {
         }
       })
     },
+    countDownChanged (dismissCountDown) {
+      this.dismissCountDown = dismissCountDown
+    },
+    showAlert () {
+      this.dismissCountDown = this.dismissSecs
+    },
     showNewContact() {
       this.form.contact = {
         id: null,
@@ -234,23 +260,49 @@ export default {
     },
     deleteContact(contact) {
       if (confirm('連絡先を削除します。よろしいですか？')) {
-        this.contancts = this.contancts.filter(item => item.id !== contact.id);
+        this.contacts = this.contacts.filter(item => item.id !== contact.id);
       }
     },
     saveContact() {
       if (this.form.contact.id) {
-        const index = this.contancts.findIndex(item => item.id === this.form.contact.id);
-        const contact = this.contancts[index];
+        const index = this.contacts.findIndex(item => item.id === this.form.contact.id);
+        const contact = this.contacts[index];
         Object.assign(contact, this.form.contact);
 
-        Vue.set(this.contancts, index, contact);
+        try {
+          this.inProgress = true
+          this.pendingTx = null
+
+          this.contractInstance.methods.updateContact(
+            contact.id, contact.name, contact.address, contact.tel
+          ).send({
+            from: this.currentAccount
+          }).on('transactionHash', (hash) => {
+            this.pendingTx = hash
+          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = null;
+            this.inProgress = false;
+
+            this.notifity = '連絡先を更新しました'
+            this.dismissCountDown = this.dismissSecs;
+
+            await this.getContacts();
+
+            this.modalShow = false;
+          }).on('error', async (err) => {
+            console.error(err)
+            this.inProgress = false
+          })
+        } catch (e) {
+          console.error(e)
+          this.inProgress = false
+        }
       } else {
         const contact = Object.assign({}, this.form.contact);
 
-        this.contancts.push(contact);
-      }
+        this.contacts.push(contact);
 
-      this.modalShow = false;
+      }
     },
   },
 };
