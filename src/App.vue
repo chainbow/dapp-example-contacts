@@ -10,7 +10,13 @@
       <h2>
         連絡帳
         <span class='float-right'>
-          <b-btn @click="showNewContact" variant='outline-primary' size='sm' :disabled="!this.currentAccount || loading">連絡先追加</b-btn>
+          <b-btn
+            @click="showNewContact"
+            variant='outline-primary'
+            size='sm'
+            :disabled="!this.currentAccount || loading" >
+            連絡先追加
+          </b-btn>
         </span>
       </h2>
     </div>
@@ -29,7 +35,13 @@
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{contact.name}}</h5>
           <div class="float-right">
-            <b-btn @click="editContact(contact)" variant='outline-success' size='sm' :disabled="!currentAccount">編集</b-btn>
+            <b-btn
+              @click="editContact(contact)"
+              variant='outline-success'
+              size='sm'
+              :disabled="!currentAccount">
+              編集
+            </b-btn>
           </div>
         </div>
         <div>
@@ -78,13 +90,30 @@
         </b-form-group>
       </b-form>
       <div class="w100 text-center" v-if='this.pendingTx'>
-        <a class='btn btn-outline-info' :href="this.network.etherscan + '/tx/' + this.pendingTx" target="_blank">etherscan で確認する</a>
+        <a
+          class='btn btn-outline-info'
+          :href="this.network.etherscan + '/tx/' + this.pendingTx"
+          target="_blank">
+          etherscan で確認する
+        </a>
       </div>
 
       <div slot="modal-footer" class="w-100">
         <div class="float-right">
-          <b-btn @click="deleteContact(form.contact)" v-if='isExists' size='sm' variant='danger' :disabled="inProgress" >削除する</b-btn>
-          <b-btn @click='saveContact' size="sm" class="ml-1" :variant="modalButtonClass" :disabled="inProgress || $v.form.$invalid">
+          <b-btn
+            @click="deleteContact(form.contact)"
+            v-if='isExists'
+            size='sm'
+            variant='danger'
+            :disabled="inProgress" >
+            削除する
+          </b-btn>
+          <b-btn
+            @click='saveContact'
+            size="sm"
+            class="ml-1"
+            :variant="modalButtonClass"
+            :disabled="inProgress || $v.form.$invalid">
             {{modalButtonText}}
           </b-btn>
         </div>
@@ -94,13 +123,12 @@
 </template>
 
 <script>
-import Vue from 'vue';
 import { validationMixin } from 'vuelidate';
 import { required, minLength, maxLength } from 'vuelidate/lib/validators';
 import Web3 from 'web3';
-import ContractAbi from '../contracts/abi.json'
+import ContractAbi from '../contracts/abi.json';
 
-const CONTRACT_ADDRESS = '0xbcb88d7bca5e3498748182735dcba73459e702e6'
+const CONTRACT_ADDRESS = '0xbcb88d7bca5e3498748182735dcba73459e702e6';
 
 export default {
   name: 'App',
@@ -144,9 +172,9 @@ export default {
   async created() {
     this.loading = true;
 
-    await this.initWeb3()
+    await this.initWeb3();
     if (this.contractInstance) {
-      await this.getContacts()
+      await this.getContacts();
     }
 
     this.loading = false;
@@ -187,60 +215,55 @@ export default {
     },
     async initNetwork() {
       const chainId = await this.web3.eth.net.getId();
-      let data = { chainId };
+      const data = { chainId };
 
       switch (chainId) {
         case 1:
           data.chain = 'mainnet';
           data.etherscan = 'https://etherscan.io';
           data.infuraWssUrl = 'wss://mainnet.infura.io/ws';
-          break
+          break;
         case 2:
-          data.chain = 'Morden'
-          break
+          data.chain = 'Morden';
+          break;
         case 3:
-          data.chain = 'ropsten'
-          data.etherscan = 'https://ropsten.etherscan.io/'
-          data.infuraWssUrl = 'wss://ropsten.infura.io/ws'
-          break
+          data.chain = 'ropsten';
+          data.etherscan = 'https://ropsten.etherscan.io/';
+          data.infuraWssUrl = 'wss://ropsten.infura.io/ws';
+          break;
         case 4:
-          data.chain = 'Rinkeby'
-          data.etherscan = 'https://rinkeby.etherscan.io/'
-          data.infuraWssUrl = 'wss://rinkeby.infura.io/ws'
-          break
+          data.chain = 'Rinkeby';
+          data.etherscan = 'https://rinkeby.etherscan.io/';
+          data.infuraWssUrl = 'wss://rinkeby.infura.io/ws';
+          break;
         case 42:
-          data.chain = 'kovan'
-          data.etherscan = 'https://kovan.etherscan.io'
-          data.infuraWssUrl = 'wss://kovan.infura.io/ws'
-          break
+          data.chain = 'kovan';
+          data.etherscan = 'https://kovan.etherscan.io';
+          data.infuraWssUrl = 'wss://kovan.infura.io/ws';
+          break;
         case 5777:
-          data.chain = 'ganache'
-          break
+          data.chain = 'ganache';
+          break;
         default:
-          data.chain = 'privatenet'
+          data.chain = 'privatenet';
       }
 
-      return data
+      return data;
     },
     async getContacts() {
       this.contacts = [];
 
       const contacts = await this.contractInstance.methods.getContactList().call();
 
-      this.contacts = contacts.map(item => {
-        return {
-          id: item.id,
-          name: item.name,
-          address: item.contactAddress,
-          tel: item.tel
-        }
-      }).filter(item => item.id !== '0');
+      this.contacts = contacts
+        .filter(item => item.id !== '0')
+        .map(item => ({ id: item.id, name: item.name, address: item.contactAddress, tel: item.tel }));
     },
-    countDownChanged (dismissCountDown) {
-      this.dismissCountDown = dismissCountDown
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown;
     },
-    showAlert () {
-      this.dismissCountDown = this.dismissSecs
+    showAlert() {
+      this.dismissCountDown = this.dismissSecs;
     },
     showNewContact() {
       this.form.contact = {
@@ -259,38 +282,39 @@ export default {
     },
     deleteContact(contact) {
       if (confirm('連絡先を削除します。よろしいですか？')) {
-        this.inProgress = true
-        this.pendingTx = null
+        this.inProgress = true;
+        this.pendingTx = null;
 
         try {
           this.contractInstance.methods.deleteContact(
-            contact.id
+            contact.id,
           ).send({
-            from: this.currentAccount
+            from: this.currentAccount,
           }).on('transactionHash', (hash) => {
-            this.pendingTx = hash
-          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = hash;
+          }).once('confirmation', async () => {
             this.pendingTx = null;
             this.inProgress = false;
 
             await this.getContacts();
 
             this.modalShow = false;
-            this.notifity = '連絡先を削除しました'
+            this.notifity = '連絡先を削除しました';
             this.dismissCountDown = this.dismissSecs;
-          }).on('error', async (err) => {
-            console.error(err)
-            this.inProgress = false
           })
+            .on('error', async (err) => {
+              console.error(err);
+              this.inProgress = false;
+            });
         } catch (e) {
-          console.error(e)
-          this.inProgress = false
+          console.error(e);
+          this.inProgress = false;
         }
       }
     },
     saveContact() {
-      this.inProgress = true
-      this.pendingTx = null
+      this.inProgress = true;
+      this.pendingTx = null;
 
       try {
         if (this.form.contact.id) {
@@ -299,50 +323,52 @@ export default {
           Object.assign(contact, this.form.contact);
 
           this.contractInstance.methods.updateContact(
-            contact.id, contact.name, contact.address, contact.tel
+            contact.id, contact.name, contact.address, contact.tel,
           ).send({
-            from: this.currentAccount
+            from: this.currentAccount,
           }).on('transactionHash', (hash) => {
-            this.pendingTx = hash
-          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = hash;
+          }).once('confirmation', async () => {
             this.pendingTx = null;
             this.inProgress = false;
 
             await this.getContacts();
 
             this.modalShow = false;
-            this.notifity = '連絡先を更新しました'
+            this.notifity = '連絡先を更新しました';
             this.dismissCountDown = this.dismissSecs;
-          }).on('error', async (err) => {
-            console.error(err)
-            this.inProgress = false
           })
+            .on('error', async (err) => {
+              console.error(err);
+              this.inProgress = false;
+            });
         } else {
           const contact = Object.assign({}, this.form.contact);
 
           this.contractInstance.methods.addContact(
-            contact.name, contact.address, contact.tel
+            contact.name, contact.address, contact.tel,
           ).send({
-            from: this.currentAccount
+            from: this.currentAccount,
           }).on('transactionHash', (hash) => {
-            this.pendingTx = hash
-          }).once('confirmation', async (confirmationNumber, receipt) => {
+            this.pendingTx = hash;
+          }).once('confirmation', async () => {
             this.pendingTx = null;
             this.inProgress = false;
 
             await this.getContacts();
 
             this.modalShow = false;
-            this.notifity = '連絡先を新規作成しました'
+            this.notifity = '連絡先を新規作成しました';
             this.dismissCountDown = this.dismissSecs;
-          }).on('error', async (err) => {
-            console.error(err)
-            this.inProgress = false
           })
+            .on('error', async (err) => {
+              console.error(err);
+              this.inProgress = false;
+            });
         }
       } catch (e) {
-        console.error(e)
-        this.inProgress = false
+        console.error(e);
+        this.inProgress = false;
       }
     },
   },
